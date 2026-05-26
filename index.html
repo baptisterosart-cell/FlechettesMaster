@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DartScore Ultimate Pro</title>
+    <title>DartScore Ultimate Pro v2</title>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #121824 0%, #080b11 100%);
@@ -12,6 +12,7 @@
             --accent-green: #2ecc71;
             --accent-blue: #3498db;
             --accent-orange: #f39c12;
+            --accent-red: #e74c3c;
             --text-main: #ffffff;
             --text-muted: #8a99ad;
         }
@@ -111,23 +112,30 @@
         }
 
         .keyboard-section { background: rgba(255, 255, 255, 0.02); border-radius: 20px; padding: 15px; margin-top: auto; }
-        .preview-score { text-align: center; font-size: 32px; font-weight: bold; margin-bottom: 10px; }
+        .preview-score { text-align: center; font-size: 28px; font-weight: bold; margin-bottom: 10px; color: #ffffff; }
         .grid-keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         
         .key { background: rgba(255, 255, 255, 0.08); border: none; color: white; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 10px; cursor: pointer; }
         .key.clear { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
         .key.ok { background: var(--accent-green); color: #121824; }
 
-        /* Multiplicateurs Cricket */
+        /* Multiplicateurs */
         .cricket-modifiers {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;
         }
         .mod-btn {
-            background: rgba(255,255,255,0.05); border: 2px solid transparent; color: white;
-            padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 13px;
+            background: rgba(255,255,255,0.08); border: 2px solid transparent; color: white;
+            padding: 12px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 13px;
         }
         .mod-btn.active {
-            border-color: var(--accent-orange); background: rgba(243, 156, 18, 0.15); color: var(--accent-orange);
+            border-color: var(--accent-orange); background: rgba(243, 156, 18, 0.25); color: var(--accent-orange);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
         }
 
         .bot-thinking { display: none; text-align: center; padding: 30px; color: var(--text-muted); }
@@ -150,6 +158,7 @@
                 <button class="mode-btn" id="mode-cricket" onclick="selectMode('cricket')">Cricket</button>
                 <button class="mode-btn" id="mode-halveit" onclick="selectMode('halveit')">Juste Cible</button>
                 <button class="mode-btn" id="mode-around" onclick="selectMode('around')">Tour du Monde</button>
+                <button class="mode-btn" id="mode-killer" onclick="selectMode('killer')">Le Tueur 🔪</button>
             </div>
         </div>
 
@@ -178,14 +187,14 @@
         <div class="history-box" id="history-container"></div>
 
         <div class="keyboard-section" id="keyboard-wrapper">
-            <!-- Zone des modificateurs (Exclusive au mode Cricket) -->
+            <!-- Zone des modificateurs (Cricket et Tueur) -->
             <div class="cricket-modifiers" id="cricket-modifiers-zone" style="display: none;">
-                <button class="mod-btn active" id="mod-1" onclick="setCricketMultiplier(1)">Simple</button>
-                <button class="mod-btn" id="mod-2" onclick="setCricketMultiplier(2)">Double x2</button>
-                <button class="mod-btn" id="mod-3" onclick="setCricketMultiplier(3)">Triple x3</button>
+                <button class="mod-btn active" id="mod-1" onclick="setCricketMultiplier(1)">Simple (x1)</button>
+                <button class="mod-btn" id="mod-2" onclick="setCricketMultiplier(2)">Double (x2)</button>
+                <button class="mod-btn" id="mod-3" onclick="setCricketMultiplier(3)">Triple (x3)</button>
             </div>
 
-            <div class="preview-score" id="preview-display">0</div>
+            <div class="preview-score" id="preview-display">Veuillez jouer</div>
             <div class="grid-keyboard" id="keyboard-grid"></div>
         </div>
 
@@ -202,7 +211,7 @@
     let currentPlayerIndex = 0;
     let currentInput = "";
     let isGameOver = false;
-    let cricketMultiplier = 1; // Stocke le multiplicateur sélectionné (1, 2 ou 3)
+    let cricketMultiplier = 1; 
 
     const halveItTargets = [15, 16, "Double", 17, 18, "Triple", 19, 20, "Bulle"];
 
@@ -257,6 +266,9 @@
                 return { name: p.name, isBot: p.isBot, score: 40, currentRoundIdx: 0 };
             } else if (selectedGameMode === 'around') {
                 return { name: p.name, isBot: p.isBot, score: 1 };
+            } else if (selectedGameMode === 'killer') {
+                // Tueur : score = nombre de vies (on commence à 3), targetNo = numéro de maison attribué (-1 si aucun)
+                return { name: p.name, isBot: p.isBot, score: 3, targetNo: -1, isKiller: false, mort: false };
             } else {
                 return { name: p.name, isBot: p.isBot, score: parseInt(selectedGameMode) };
             }
@@ -270,7 +282,7 @@
         document.getElementById('menu-screen').style.display = 'none';
         document.getElementById('game-screen').style.display = 'flex';
         
-        let titleMap = {'301':'301', '501':'501', 'cricket':'Cricket', 'halveit':'Juste Cible', 'around':'Tour du Monde'};
+        let titleMap = {'301':'301', '501':'501', 'cricket':'Cricket', 'halveit':'Juste Cible', 'around':'Tour du Monde', 'killer':'Le Tueur 🔪'};
         document.getElementById('game-title-display').innerText = titleMap[selectedGameMode];
         document.getElementById('history-container').innerHTML = `<div class="history-entry">🏁 La partie commence !</div>`;
         
@@ -290,9 +302,8 @@
         document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`mod-${mult}`).classList.add('active');
         
-        // Petite aide visuelle sur l'écran
-        let prefix = mult === 3 ? "Triple " : (mult === 2 ? "Double " : "");
-        document.getElementById('preview-display').innerText = prefix + "Sélectionné";
+        let label = mult === 3 ? "🎯 Prochain clic : TRIPLE !" : (mult === 2 ? "🎯 Prochain clic : DOUBLE !" : "Prochain clic : Simple");
+        document.getElementById('preview-display').innerText = label;
     }
 
     function buildKeyboard() {
@@ -301,31 +312,43 @@
         const modZone = document.getElementById('cricket-modifiers-zone');
         
         if (selectedGameMode === 'cricket') {
-            modZone.style.display = 'grid'; // Affiche la ligne Simple/Double/Triple
+            modZone.style.display = 'grid';
             grid.innerHTML = `
                 <button class="key" onclick="pressCricket(20)">20</button><button class="key" onclick="pressCricket(19)">19</button><button class="key" onclick="pressCricket(18)">18</button>
                 <button class="key" onclick="pressCricket(17)">17</button><button class="key" onclick="pressCricket(16)">16</button><button class="key" onclick="pressCricket(15)">15</button>
                 <button class="key" style="grid-column: span 2" onclick="pressCricket(25)">Bulle 🎯</button>
                 <button class="key clear" onclick="pressCricket(0)">Manqué ⭕</button>
             `;
-            preview.innerText = "Sélectionnez votre zone";
+            preview.innerText = "Sélectionnez d'abord le multiplicateur ci-dessus !";
+        } else if (selectedGameMode === 'killer') {
+            modZone.style.display = 'grid'; // Sert aussi au Tueur pour devenir tueur via le double
+            grid.innerHTML = `
+                <button class="key" onclick="pressKillerKey(1)">1</button><button class="key" onclick="pressKillerKey(2)">2</button><button class="key" onclick="pressKillerKey(3)">3</button>
+                <button class="key" onclick="pressKillerKey(4)">4</button><button class="key" onclick="pressKillerKey(5)">5</button><button class="key" onclick="pressKillerKey(6)">6</button>
+                <button class="key" onclick="pressKillerKey(7)">7</button><button class="key" onclick="pressKillerKey(8)">8</button><button class="key" onclick="pressKillerKey(9)">9</button>
+                <button class="key" onclick="pressKillerKey(10)">10</button><button class="key" onclick="pressKillerKey(11)">11</button><button class="key" onclick="pressKillerKey(12)">12</button>
+                <button class="key" onclick="pressKillerKey(13)">13</button><button class="key" onclick="pressKillerKey(14)">14</button><button class="key" onclick="pressKillerKey(15)">15</button>
+                <button class="key" onclick="pressKillerKey(16)">16</button><button class="key" onclick="pressKillerKey(17)/">17</button><button class="key" onclick="pressKillerKey(18)">18</button>
+                <button class="key" onclick="pressKillerKey(19)">19</button><button class="key" onclick="pressKillerKey(20)">20</button><button class="key" onclick="pressKillerKey(25)">Bulle</button>
+                <button class="key clear" style="grid-column: span 3;" onclick="pressKillerKey(0)">Manqué ⭕</button>
+            `;
+            preview.innerText = "Sélectionnez votre impact";
+        } else if (selectedGameMode === 'around') {
+            modZone.style.display = 'none';
+            grid.innerHTML = `
+                <button class="key clear" style="grid-column: span 1" onclick="executeAroundTurn(false)">Manqué ⭕</button>
+                <button class="key ok" style="grid-column: span 2" onclick="executeAroundTurn(true)">Touché ! 🎯</button>
+            `;
+            preview.innerText = "Lancer de 3 fléchettes";
         } else {
             modZone.style.display = 'none';
-            if (selectedGameMode === 'around') {
-                grid.innerHTML = `
-                    <button class="key clear" style="grid-column: span 1" onclick="executeAroundTurn(false)">Manqué ⭕</button>
-                    <button class="key ok" style="grid-column: span 2" onclick="executeAroundTurn(true)">Touché ! 🎯</button>
-                `;
-                preview.innerText = "Lancer de 3 fléchettes";
-            } else {
-                grid.innerHTML = `
-                    <button class="key" onclick="pressNum(1)">1</button><button class="key" onclick="pressNum(2)">2</button><button class="key" onclick="pressNum(3)">3</button>
-                    <button class="key" onclick="pressNum(4)">4</button><button class="key" onclick="pressNum(5)">5</button><button class="key" onclick="pressNum(6)">6</button>
-                    <button class="key" onclick="pressNum(7)">7</button><button class="key" onclick="pressNum(8)">8</button><button class="key" onclick="pressNum(9)">9</button>
-                    <button class="key clear" onclick="pressClear()">Effacer</button><button class="key" onclick="pressNum(0)">0</button><button class="key ok" onclick="pressOK()">OK</button>
-                `;
-                preview.innerText = "0";
-            }
+            grid.innerHTML = `
+                <button class="key" onclick="pressNum(1)">1</button><button class="key" onclick="pressNum(2)">2</button><button class="key" onclick="pressNum(3)">3</button>
+                <button class="key" onclick="pressNum(4)">4</button><button class="key" onclick="pressNum(5)">5</button><button class="key" onclick="pressNum(6)">6</button>
+                <button class="key" onclick="pressNum(7)">7</button><button class="key" onclick="pressNum(8)">8</button><button class="key" onclick="pressNum(9)">9</button>
+                <button class="key clear" onclick="pressClear()">Effacer</button><button class="key" onclick="pressNum(0)">0</button><button class="key ok" onclick="pressOK()">OK</button>
+            `;
+            preview.innerText = "0";
         }
     }
 
@@ -338,10 +361,8 @@
 
         if (selectedGameMode === 'cricket') {
             listContainer.style.display = 'none';
-            
             let targets = [20, 19, 18, 17, 16, 15, 25];
-            let tableHTML = `<div class="cricket-table-container"><table class="cricket-table"><thead><tr>`;
-            tableHTML += `<th>Cible</th>`;
+            let tableHTML = `<div class="cricket-table-container"><table class="cricket-table"><thead><tr><th>Cible</th>`;
             
             players.forEach((p, index) => {
                 let isCurrent = index === currentPlayerIndex ? 'style="color:var(--accent-green); font-weight:bold;"' : '';
@@ -361,7 +382,6 @@
                 });
                 tableHTML += `</tr>`;
             });
-            
             tableHTML += `</tbody></table></div>`;
             tableWrapper.innerHTML = tableHTML;
 
@@ -378,15 +398,26 @@
                 } else if (selectedGameMode === 'around') {
                     subText = player.score > 20 ? "Objectif : <b>Bulle</b>" : `Cherche le numéro : <b>${player.score}</b>`;
                     mainScore = player.score > 21 ? "Gagné !" : `#${player.score}`;
+                } else if (selectedGameMode === 'killer') {
+                    if (player.mort) {
+                        subText = "❌ ÉLIMINÉ";
+                        mainScore = "MORT";
+                    } else if (!player.isKiller) {
+                        subText = player.targetNo === -1 ? "Attribuer un numéro" : `Maison : <b>${player.targetNo}</b> (Vise le Double)`;
+                        mainScore = `${player.score} ❤`;
+                    } else {
+                        subText = `🔪 <b>TUEUR</b> (Maison : ${player.targetNo})`;
+                        mainScore = `${player.score} ❤`;
+                    }
                 }
 
                 listContainer.innerHTML += `
-                    <div class="player-card ${isActive}">
+                    <div class="player-card ${isActive}" style="${player.mort ? 'opacity: 0.4;' : ''}">
                         <div>
                             <div style="font-weight:bold;">${player.name}</div>
                             <div class="player-info-sub">${subText}</div>
                         </div>
-                        <div class="player-score">${mainScore}</div>
+                        <div class="player-score" style="color: ${selectedGameMode === 'killer' && player.isKiller ? 'var(--accent-red)' : ''}">${mainScore}</div>
                     </div>
                 `;
             });
@@ -430,7 +461,7 @@
         pressClear(); nextPlayer();
     }
 
-    // CRICKET (PRISE EN COMPTE MULTIPLICATEUR)
+    // CRICKET
     function pressCricket(target) {
         if(isGameOver) return;
         let player = players[currentPlayerIndex];
@@ -441,20 +472,15 @@
             setCricketMultiplier(1); nextPlayer(); return;
         }
 
-        // Cas spécial de la bulle : Ne peut être qu'un simple (25) ou double (50), pas de triple au Cricket traditionnel
-        if (target === 25 && cricketMultiplier === 3) {
-            cricketMultiplier = 2; // Rétrogradé automatiquement en double bulle
-        }
+        if (target === 25 && cricketMultiplier === 3) cricketMultiplier = 2; 
 
         let label = cricketMultiplier === 3 ? "Triple" : (cricketMultiplier === 2 ? "Double" : "Simple");
         let addedHits = cricketMultiplier;
 
         if(player.cricketStats[target] < 3) {
-            // Ajout des points de touches (Max 3)
             player.cricketStats[target] = Math.min(3, player.cricketStats[target] + addedHits);
             history.insertAdjacentHTML('afterbegin', `<div>🎯 ${player.name} valide un <b>${label} ${target === 25 ? 'Bulle' : target}</b> !</div>`);
             
-            // Vérifier victoire
             let win = true;
             for(let t in player.cricketStats) { if(player.cricketStats[t] < 3) win = false; }
             if(win) {
@@ -465,7 +491,6 @@
             history.insertAdjacentHTML('afterbegin', `<div>🔒 ${target} déjà fermé pour ${player.name}</div>`);
         }
 
-        // Réinitialiser le modificateur sur Simple pour le joueur d'après
         setCricketMultiplier(1);
         updateGameUI(); nextPlayer();
     }
@@ -517,14 +542,75 @@
         pressClear(); nextPlayer();
     }
 
+    // MINI JEU EXTRA : LE TUEUR (KILLER)
+    function pressKillerKey(target) {
+        if (isGameOver) return;
+        let player = players[currentPlayerIndex];
+        const history = document.getElementById('history-container');
+
+        if (target === 0) {
+            history.insertAdjacentHTML('afterbegin', `<div>⭕ ${player.name} a manqué son lancer.</div>`);
+            setCricketMultiplier(1); nextPlayer(); return;
+        }
+
+        // Étape 1 : Attribuer un numéro de maison
+        if (player.targetNo === -1) {
+            // Vérifier si le numéro est déjà pris
+            let dejaPris = players.some(p => p.targetNo === target);
+            if (dejaPris) {
+                alert("Ce numéro est déjà attribué à un autre joueur, choisis-en un autre !");
+                return;
+            }
+            player.targetNo = target;
+            history.insertAdjacentHTML('afterbegin', `<div>🏠 ${player.name} s'installe sur le numéro <b>${target}</b></div>`);
+        } 
+        // Étape 2 : Devenir Tueur (Nécessite de toucher son propre DOUBLE)
+        else if (!player.isKiller) {
+            if (target === player.targetNo && cricketMultiplier === 2) {
+                player.isKiller = true;
+                history.insertAdjacentHTML('afterbegin', `<div>🔪 <b>⚠️ ${player.name} EST DEVENU UN TUEUR !</b></div>`);
+            } else {
+                history.insertAdjacentHTML('afterbegin', `<div>🎯 ${player.name} touche le ${target} (Pas le double requis)</div>`);
+            }
+        } 
+        // Étape 3 : Mode Tueur actif (Peut chasser les autres ou perdre sa propre vie par erreur)
+        else {
+            let victime = players.find(p => p.targetNo === target && !p.mort);
+            if (victime) {
+                let degats = cricketMultiplier; // Simple = 1 vie, Double = 2 vies, Triple = 3 vies
+                victime.score -= degats;
+                history.insertAdjacentHTML('afterbegin', `<div>⚔️ ${player.name} inflige -${degats} vie(s) à <b>${victime.name}</b> !</div>`);
+                
+                if (victime.score <= 0) {
+                    victime.score = 0; victime.mort = true;
+                    history.insertAdjacentHTML('afterbegin', `<div>💀 <b>${victime.name} est éliminé !</b></div>`);
+                }
+                
+                // Vérification de fin de partie (Reste-t-il un seul survivant ?)
+                let survivants = players.filter(p => !p.mort);
+                if (survivants.length === 1) {
+                    isGameOver = true; updateGameUI();
+                    alert(`🏆 Victoire Sanglante ! ${survivants[0].name} a éliminé tout le monde !`); return;
+                }
+            } else {
+                history.insertAdjacentHTML('afterbegin', `<div>🎯 ${player.name} tire dans le vide sur le ${target}</div>`);
+            }
+        }
+
+        setCricketMultiplier(1);
+        updateGameUI(); nextPlayer();
+    }
+
     function nextPlayer() {
         if (!isGameOver) {
-            currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            do {
+                currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            } while (players[currentPlayerIndex].mort && !isGameOver); // Passe les joueurs morts
             updateGameUI();
         }
     }
 
-    // INTELLIGENCE DES BOTS (AMÉLIORÉE AVEC DOUBLE/TRIPLE POUR LE CRICKET)
+    // BOT LOGIC
     function runBotTurn() {
         setTimeout(() => {
             if(isGameOver) return;
@@ -535,33 +621,42 @@
                 let shot = 0;
                 for(let t of targets) {
                     if(bot.cricketStats[t] < 3) { 
-                        // 55% de chance de toucher
                         if (Math.random() > 0.45) {
                             shot = t;
-                            // Détermination aléatoire si le bot fait un Simple, Double ou Triple (Sauf Bulle)
                             let randMult = Math.random();
-                            if (shot !== 25 && randMult > 0.85) {
-                                cricketMultiplier = 3; // Triple surprise !
-                            } else if (randMult > 0.65) {
-                                cricketMultiplier = 2; // Double !
-                            } else {
-                                cricketMultiplier = 1;
-                            }
-                        } else {
-                            shot = 0; // Manqué
-                        }
+                            if (shot !== 25 && randMult > 0.85) cricketMultiplier = 3;
+                            else if (randMult > 0.65) cricketMultiplier = 2;
+                            else cricketMultiplier = 1;
+                        } else { shot = 0; }
                         break; 
                     }
                 }
                 pressCricket(shot);
+            } else if (selectedGameMode === 'killer') {
+                // Choix de tir pour le Bot Tueur
+                if (bot.targetNo === -1) {
+                    // Cherche un numéro libre
+                    let dispo = [20,19,18,17,16,15,14,13,12,11,10];
+                    let choisi = dispo.find(n => !players.some(p => p.targetNo === n));
+                    pressKillerKey(choisi || 5);
+                } else if (!bot.isKiller) {
+                    // Cherche son double
+                    if(Math.random() > 0.5) { cricketMultiplier = 2; pressKillerKey(bot.targetNo); }
+                    else { pressKillerKey(0); }
+                } else {
+                    // Chasse un joueur humain vivant
+                    let proie = players.find(p => !p.isBot && !p.mort);
+                    if (proie && Math.random() > 0.4) {
+                        if (Math.random() > 0.8) cricketMultiplier = 2;
+                        pressKillerKey(proie.targetNo);
+                    } else { pressKillerKey(0); }
+                }
             } else if (selectedGameMode === 'around') {
-                let hit = Math.random() > 0.5;
-                executeAroundTurn(hit);
+                executeAroundTurn(Math.random() > 0.5);
             } else if (selectedGameMode === 'halveit') {
                 let hitSuccess = Math.random() > 0.35;
                 let scoreSimulated = hitSuccess ? (Math.floor(Math.random() * 3) + 1) * parseInt(halveItTargets[bot.currentRoundIdx]) || 20 : 0;
-                currentInput = scoreSimulated.toString();
-                pressHalveIt();
+                currentInput = scoreSimulated.toString(); pressHalveIt();
             } else {
                 let botPoints = Math.floor(Math.random() * 35) + 15;
                 if (botPoints > bot.score) botPoints = bot.score;
