@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DartScore Mobile</title>
+    <title>DartScore Pro</title>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #121824 0%, #080b11 100%);
@@ -16,7 +16,7 @@
 
         body {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: var(--bg-gradient);
             color: var(--text-main);
             min-height: 100vh;
@@ -26,65 +26,141 @@
 
         .app-container {
             width: 100%;
-            max-width: 414px; /* Taille standard iPhone */
+            max-width: 414px;
             padding: 20px;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
         }
 
+        /* ÉCRAN CONFIGURATION */
+        .menu-screen {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .game-modes {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .mode-btn, .setup-btn {
+            background: var(--card-bg);
+            border: 2px solid transparent;
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .mode-btn.selected {
+            border-color: var(--accent-green);
+            background: var(--active-bg);
+            color: var(--accent-green);
+        }
+
+        .player-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .player-input-row input {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            flex: 1;
+        }
+
+        .btn-toggle-bot {
+            background: #34495e;
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-toggle-bot.is-bot {
+            background: #9b59b6;
+        }
+
+        .btn-remove {
+            background: #e74c3c;
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .btn-start {
+            background: var(--accent-green);
+            color: #121824;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* ÉCRAN DE JEU */
+        .game-screen {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            flex: 1;
+        }
+
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            font-size: 24px;
-            margin: 0;
-            font-weight: 700;
-        }
-
-        .reset-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
+            margin-bottom: 15px;
         }
 
         .players-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
         .player-card {
             background: var(--card-bg);
             border: 2px solid transparent;
-            padding: 15px;
+            padding: 12px;
             border-radius: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.3s ease;
         }
 
         .player-card.active {
             background: var(--active-bg);
             border-color: var(--accent-green);
-        }
-
-        .player-name {
-            font-weight: 600;
-            font-size: 18px;
-        }
-
-        .player-type {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 4px;
         }
 
         .player-score {
@@ -93,23 +169,26 @@
             font-weight: bold;
         }
 
-        .player-card.active .player-score, .player-card.active .player-name {
-            color: var(--accent-green);
+        /* Style Spécifique Cricket */
+        .cricket-grid {
+            display: flex;
+            gap: 5px;
+            font-size: 12px;
+        }
+        .cricket-stat {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
         }
 
         .history-box {
             background: rgba(0, 0, 0, 0.3);
             border-radius: 12px;
-            padding: 15px;
-            height: 80px;
+            padding: 12px;
+            height: 60px;
             overflow-y: auto;
-            margin-bottom: 20px;
-            font-size: 13px;
-        }
-
-        .history-entry {
-            margin-bottom: 4px;
-            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 15px;
+            font-size: 12px;
         }
 
         .keyboard-section {
@@ -121,227 +200,347 @@
 
         .preview-score {
             text-align: center;
-            font-size: 36px;
+            font-size: 32px;
             font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        .preview-score span {
-            font-size: 16px;
-            color: var(--text-muted);
-            font-weight: normal;
+            margin-bottom: 10px;
         }
 
         .grid-keyboard {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 8px;
         }
 
         .key {
             background: rgba(255, 255, 255, 0.08);
             border: none;
             color: white;
-            padding: 18px;
+            padding: 15px;
             font-size: 18px;
             font-weight: bold;
             border-radius: 10px;
             cursor: pointer;
-            touch-action: manipulation;
         }
 
-        .key:active {
-            opacity: 0.7;
-        }
-
-        .key.clear {
-            background: rgba(231, 76, 60, 0.2);
-            color: #e74c3c;
-        }
-
-        .key.ok {
-            background: var(--accent-green);
-            color: #121824;
-        }
+        .key.clear { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+        .key.ok { background: var(--accent-green); color: #121824; }
 
         .bot-thinking {
             display: none;
             text-align: center;
-            padding: 40px;
+            padding: 30px;
             color: var(--text-muted);
         }
-
-        @keyframes blink {
-            0% { opacity: .2; }
-            20% { opacity: 1; }
-            100% { opacity: .2; }
-        }
-
-        .bot-thinking span {
-            animation-name: blink;
-            animation-duration: 1.4s;
-            animation-iteration-count: infinite;
-            animation-fill-mode: both;
-        }
-        .bot-thinking span:nth-child(2) { animation-delay: .2s; }
-        .bot-thinking span:nth-child(3) { animation-delay: .4s; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <header>
-        <h1>🎯 DartScore</h1>
-        <button class="reset-btn" onclick="initGame()">🔄</button>
-    </header>
+    
+    <div class="menu-screen" id="menu-screen">
+        <h1 style="text-align: center;">🎯 DartScore Setup</h1>
+        
+        <div>
+            <div class="section-title">1. Choisir le Jeu</div>
+            <div class="game-modes">
+                <button class="mode-btn selected" id="mode-301" onclick="selectMode('301')">301</button>
+                <button class="mode-btn" id="mode-501" onclick="selectMode('501')">501</button>
+                <button class="mode-btn" id="mode-cricket" onclick="selectMode('cricket')">Cricket</button>
+            </div>
+        </div>
 
-    <div class="players-list" id="players-container"></div>
+        <div>
+            <div class="section-title">2. Joueurs &amp; Bots</div>
+            <div id="players-setup-list">
+                </div>
+            <button class="setup-btn" style="width:100%; background: rgba(255,255,255,0.1);" onclick="addPlayerSetupRow()">+ Ajouter un joueur</button>
+        </div>
 
-    <div class="history-box" id="history-container"></div>
+        <button class="btn-start" onclick="startGame()">LANCER LA PARTIE 🚀</button>
+    </div>
 
-    <div class="keyboard-section" id="keyboard-wrapper">
-        <div class="preview-score" id="preview-display">0 <span>pts</span></div>
-        <div class="grid-keyboard">
-            <button class="key" onclick="pressNum(1)">1</button>
-            <button class="key" onclick="pressNum(2)">2</button>
-            <button class="key" onclick="pressNum(3)">3</button>
-            <button class="key" onclick="pressNum(4)">4</button>
-            <button class="key" onclick="pressNum(5)">5</button>
-            <button class="key" onclick="pressNum(6)">6</button>
-            <button class="key" onclick="pressNum(7)">7</button>
-            <button class="key" onclick="pressNum(8)">8</button>
-            <button class="key" onclick="pressNum(9)">9</button>
-            <button class="key clear" onclick="pressClear()">Effacer</button>
-            <button class="key" onclick="pressNum(0)">0</button>
-            <button class="key ok" onclick="pressOK()">OK</button>
+    <div class="game-screen" id="game-screen">
+        <header>
+            <h2 id="game-title-display">301</h2>
+            <button class="key clear" style="padding: 5px 10px; font-size: 12px;" onclick="quitterPartie()">Quitter</button>
+        </header>
+
+        <div class="players-list" id="players-game-container"></div>
+        <div class="history-box" id="history-container"></div>
+
+        <div class="keyboard-section" id="keyboard-wrapper">
+            <div class="preview-score" id="preview-display">0</div>
+            <div class="grid-keyboard" id="keyboard-grid">
+                </div>
+        </div>
+
+        <div class="bot-thinking" id="bot-status">
+            🤖 Le Bot réfléchit...
         </div>
     </div>
 
-    <div class="bot-thinking" id="bot-status">
-        Darty Bot réfléchit<span>.</span><span>.</span><span>.</span>
-    </div>
 </div>
 
 <script>
+    let selectedGameMode = '301';
     let players = [];
     let currentPlayerIndex = 0;
     let currentInput = "";
     let isGameOver = false;
 
-    function initGame() {
-        players = [
-            { name: "Moi", score: 301, isBot: false },
-            { name: "Joueur 2", score: 301, isBot: false },
-            { name: "Darty Bot (IA)", score: 301, isBot: true }
-        ];
+    // Liste par défaut dans le menu de config
+    let setupPlayers = [
+        { name: "Joueur 1", isBot: false },
+        { name: "DartyBot 🤖", isBot: true }
+    ];
+
+    function renderSetup() {
+        const container = document.getElementById('players-setup-list');
+        container.innerHTML = '';
+        setupPlayers.forEach((p, idx) => {
+            container.innerHTML += `
+                <div class="player-input-row">
+                    <input type="text" value="${p.name}" onchange="updateSetupName(${idx}, this.value)">
+                    <button class="btn-toggle-bot ${p.isBot ? 'is-bot' : ''}" onclick="toggleSetupBot(${idx})">
+                        ${p.isBot ? '🤖 Bot' : '👤 Humain'}
+                    </button>
+                    ${setupPlayers.length > 1 ? `<button class="btn-remove" onclick="removeSetupPlayer(${idx})">×</button>` : ''}
+                </div>
+            `;
+        });
+    }
+
+    function selectMode(mode) {
+        selectedGameMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
+        document.getElementById(`mode-${mode}`).classList.add('selected');
+    }
+
+    function addPlayerSetupRow() {
+        setupPlayers.push({ name: `Joueur ${setupPlayers.length + 1}`, isBot: false });
+        renderSetup();
+    }
+
+    function removeSetupPlayer(idx) {
+        setupPlayers.splice(idx, 1);
+        renderSetup();
+    }
+
+    function updateSetupName(idx, val) {
+        setupPlayers[idx].name = val;
+    }
+
+    function toggleSetupBot(idx) {
+        setupPlayers[idx].isBot = !setupPlayers[idx].isBot;
+        if(setupPlayers[idx].isBot && setupPlayers[idx].name.startsWith('Joueur')) {
+            setupPlayers[idx].name = "DartyBot 🤖";
+        }
+        renderSetup();
+    }
+
+    // Lancement réel du jeu
+    function startGame() {
+        players = setupPlayers.map(p => {
+            if (selectedGameMode === 'cricket') {
+                // Au Cricket, on doit fermer 15,16,17,18,19,20 et Bulle (25)
+                return { name: p.name, isBot: p.isBot, score: 0, cricketStats: {15:0, 16:0, 17:0, 18:0, 19:0, 20:0, 25:0} };
+            } else {
+                return { name: p.name, isBot: p.isBot, score: parseInt(selectedGameMode) };
+            }
+        });
+
         currentPlayerIndex = 0;
         currentInput = "";
         isGameOver = false;
+
+        document.getElementById('menu-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'flex';
+        document.getElementById('game-title-display').innerText = `Mode : ${selectedGameMode.toUpperCase()}`;
         
-        document.getElementById('history-container').innerHTML = '<div class="history-entry">🎯 La partie de 301 commence !</div>';
-        updateUI();
+        document.getElementById('history-container').innerHTML = `<div class="history-entry">🏁 Début de la partie de ${selectedGameMode.toUpperCase()} !</div>`;
+        
+        buildKeyboard();
+        updateGameUI();
     }
 
-    function updateUI() {
-        // Rendu des joueurs
-        const container = document.getElementById('players-container');
+    function quitterPartie() {
+        if(confirm("Quitter la partie en cours ?")) {
+            document.getElementById('menu-screen').style.display = 'flex';
+            document.getElementById('game-screen').style.display = 'none';
+        }
+    }
+
+    function buildKeyboard() {
+        const grid = document.getElementById('keyboard-grid');
+        if (selectedGameMode === 'cricket') {
+            // Clavier adapté au Cricket (Touches des cibles requises)
+            grid.innerHTML = `
+                <button class="key" onclick="pressCricket(15)">15</button>
+                <button class="key" onclick="pressCricket(16)">16</button>
+                <button class="key" onclick="pressCricket(17)">17</button>
+                <button class="key" onclick="pressCricket(18)">18</button>
+                <button class="key" onclick="pressCricket(19)">19</button>
+                <button class="key" onclick="pressCricket(20)">20</button>
+                <button class="key" onclick="pressCricket(25)">Bulle</button>
+                <button class="key clear" onclick="pressCricket(0)">Manqué</button>
+                <button class="key ok" style="background:#3498db; color:white;" onclick="passerTourCricket()">Suivant</button>
+            `;
+            document.getElementById('preview-display').innerText = "Sélectionnez vos touches";
+        } else {
+            // Clavier standard pour le X01
+            grid.innerHTML = `
+                <button class="key" onclick="pressNum(1)">1</button><button class="key" onclick="pressNum(2)">2</button><button class="key" onclick="pressNum(3)">3</button>
+                <button class="key" onclick="pressNum(4)">4</button><button class="key" onclick="pressNum(5)">5</button><button class="key" onclick="pressNum(6)">6</button>
+                <button class="key" onclick="pressNum(7)">7</button><button class="key" onclick="pressNum(8)">8</button><button class="key" onclick="pressNum(9)">9</button>
+                <button class="key clear" onclick="pressClear()">Effacer</button><button class="key" onclick="pressNum(0)">0</button><button class="key ok" onclick="pressOK()">OK</button>
+            `;
+        }
+    }
+
+    function updateGameUI() {
+        const container = document.getElementById('players-game-container');
         container.innerHTML = '';
         
         players.forEach((player, index) => {
             const isActive = index === currentPlayerIndex ? 'active' : '';
+            let scoreDisplay = player.score;
+
+            if (selectedGameMode === 'cricket') {
+                scoreDisplay = `<div class="cricket-grid">`;
+                for (let target in player.cricketStats) {
+                    let count = player.cricketStats[target];
+                    let symbol = count >= 3 ? "❌" : (count === 2 ? "╱" : (count === 1 ? "  I  " : "·"));
+                    scoreDisplay += `<div class="cricket-stat">${target==25?'B':target}:${symbol}</div>`;
+                }
+                scoreDisplay += `</div>`;
+            }
+
             container.innerHTML += `
                 <div class="player-card ${isActive}">
                     <div>
-                        <div class="player-name">${player.name}</div>
-                        <div class="player-type">${player.isBot ? '🤖 Intelligence Artificielle' : '👤 Joueur'}</div>
+                        <div style="font-weight:bold;">${player.name} ${player.isBot ? '🤖' : ''}</div>
                     </div>
-                    <div class="player-score">${player.score}</div>
+                    <div class="player-score">${scoreDisplay}</div>
                 </div>
             `;
         });
 
-        document.getElementById('preview-display').innerHTML = `${currentInput || '0'} <span>pts</span>`;
-
-        // Gestion de l'affichage Clavier vs Mode Bot
         if (players[currentPlayerIndex].isBot && !isGameOver) {
             document.getElementById('keyboard-wrapper').style.display = 'none';
             document.getElementById('bot-status').style.display = 'block';
+            runBotTurn();
         } else {
             document.getElementById('keyboard-wrapper').style.display = 'block';
             document.getElementById('bot-status').style.display = 'none';
         }
     }
 
+    // LOGIQUE X01 (301 / 501)
     function pressNum(num) {
         if (currentInput.length < 3) {
             currentInput += num;
-            updateUI();
+            document.getElementById('preview-display').innerText = currentInput;
         }
     }
-
-    function pressClear() {
-        currentInput = "";
-        updateUI();
-    }
-
+    function pressClear() { currentInput = ""; document.getElementById('preview-display').innerText = "0"; }
+    
     function pressOK() {
         const points = parseInt(currentInput) || 0;
-        if (points > 180) {
-            alert("Le score maximum avec 3 fléchettes est de 180 !");
-            return;
-        }
-        executeTurn(points);
+        if (points > 180) { alert("Max 180 !"); return; }
+        executeX01Turn(points);
     }
 
-    function executeTurn(points) {
-        if (isGameOver) return;
-
+    function executeX01Turn(points) {
         let player = players[currentPlayerIndex];
         let newScore = player.score - points;
         const history = document.getElementById('history-container');
 
         if (newScore === 0) {
             player.score = 0;
-            history.insertAdjacentHTML('afterbegin', `<div class="history-entry">🎉 <b>${player.name}</b> l'emporte !</div>`);
             isGameOver = true;
-            updateUI();
-            setTimeout(() => alert(`Victoire de ${player.name} ! 🎉`), 100);
+            updateGameUI();
+            alert(`🎉 Victoire de ${player.name} !`);
             return;
         } else if (newScore < 0) {
-            history.insertAdjacentHTML('afterbegin', `<div class="history-entry">💥 ${player.name} fait un BUST (${points} pts)</div>`);
+            history.insertAdjacentHTML('afterbegin', `<div>💥 ${player.name} BUST (${points} pts)</div>`);
         } else {
             player.score = newScore;
-            history.insertAdjacentHTML('afterbegin', `<div class="history-entry">🎯 ${player.name} marque ${points} pts (Reste : ${newScore})</div>`);
+            history.insertAdjacentHTML('afterbegin', `<div>🎯 ${player.name} : -${points} (Reste : ${newScore})</div>`);
         }
 
         currentInput = "";
-        currentPlayerIndex = (currentPlayerIndex + 1) % players.count;
-        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
-        
-        updateUI();
-
-        if (players[currentPlayerIndex].isBot && !isGameOver) {
-            runBotTurn();
-        }
+        document.getElementById('preview-display').innerText = "0";
+        nextPlayer();
     }
 
+    // LOGIQUE CRICKET
+    function pressCricket(target) {
+        if(isGameOver) return;
+        let player = players[currentPlayerIndex];
+        const history = document.getElementById('history-container');
+
+        if(target === 0) {
+            history.insertAdjacentHTML('afterbegin', `<div>⭕ ${player.name} a manqué son lancer</div>`);
+            nextPlayer();
+            return;
+        }
+
+        if(player.cricketStats[target] < 3) {
+            player.cricketStats[target]++;
+            history.insertAdjacentHTML('afterbegin', `<div>🎯 ${player.name} touche le ${target === 25 ? 'Bulle' : target}</div>`);
+            
+            // Vérifier victoire Cricket
+            let win = true;
+            for(let t in player.cricketStats) {
+                if(player.cricketStats[t] < 3) win = false;
+            }
+            if(win) {
+                isGameOver = true;
+                updateGameUI();
+                alert(`🎉 Victoire au Cricket de ${player.name} !`);
+                return;
+            }
+        } else {
+            history.insertAdjacentHTML('afterbegin', `<div>🔒 ${target} déjà fermé pour ${player.name}</div>`);
+        }
+        updateGameUI();
+    }
+
+    function passerTourCricket() { nextPlayer(); }
+
+    function nextPlayer() {
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+        updateGameUI();
+    }
+
+    // LOGIQUE DES BOTS
     function runBotTurn() {
         setTimeout(() => {
-            const bot = players[currentPlayerIndex];
-            // Logique de tir du bot
-            let botPoints = Math.floor(Math.random() * 30) + 15; // Score entre 15 et 45
+            if(isGameOver) return;
+            let bot = players[currentPlayerIndex];
             
-            // Si le bot peut gagner, on lui donne une chance de réussir son coup
-            if (botPoints > bot.score) {
-                botPoints = Math.random() > 0.5 ? bot.score : Math.floor(Math.random() * bot.score);
+            if (selectedGameMode === 'cricket') {
+                // Le bot cherche une cible non fermée
+                let targets = [20, 19, 18, 17, 16, 15, 25];
+                let shot = 0;
+                for(let t of targets) {
+                    if(bot.cricketStats[t] < 3) {
+                        shot = Math.random() > 0.4 ? t : 0; // 60% de chance de toucher
+                        break;
+                    }
+                }
+                pressCricket(shot);
+            } else {
+                // Mode X01
+                let botPoints = Math.floor(Math.random() * 35) + 15;
+                if (botPoints > bot.score) botPoints = bot.score;
+                executeX01Turn(botPoints);
             }
-
-            executeTurn(botPoints);
-        }, 1500); // 1.5 seconde de réflexion
+        }, 1500);
     }
 
-    // Lancement automatique
-    initGame();
+    // Démarrage initial sur le menu
+    renderSetup();
 </script>
 </body>
 </html>
