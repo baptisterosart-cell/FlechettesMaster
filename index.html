@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DartScore Ultimate</title>
+    <title>DartScore Ultimate Pro</title>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #121824 0%, #080b11 100%);
@@ -11,6 +11,7 @@
             --active-bg: rgba(46, 204, 113, 0.15);
             --accent-green: #2ecc71;
             --accent-blue: #3498db;
+            --accent-orange: #f39c12;
             --text-main: #ffffff;
             --text-muted: #8a99ad;
         }
@@ -117,6 +118,18 @@
         .key.clear { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
         .key.ok { background: var(--accent-green); color: #121824; }
 
+        /* Multiplicateurs Cricket */
+        .cricket-modifiers {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;
+        }
+        .mod-btn {
+            background: rgba(255,255,255,0.05); border: 2px solid transparent; color: white;
+            padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 13px;
+        }
+        .mod-btn.active {
+            border-color: var(--accent-orange); background: rgba(243, 156, 18, 0.15); color: var(--accent-orange);
+        }
+
         .bot-thinking { display: none; text-align: center; padding: 30px; color: var(--text-muted); }
     </style>
 </head>
@@ -156,7 +169,7 @@
             <button class="key clear" style="padding: 5px 12px; font-size: 12px; font-weight: normal;" onclick="quitterPartie()">Quitter</button>
         </header>
 
-        <!-- Liste des joueurs (Masquée en mode Cricket car intégrée au tableau) -->
+        <!-- Liste des joueurs standard -->
         <div class="players-list" id="players-game-container"></div>
         
         <!-- Conteneur dynamique pour le tableau de Cricket -->
@@ -165,6 +178,13 @@
         <div class="history-box" id="history-container"></div>
 
         <div class="keyboard-section" id="keyboard-wrapper">
+            <!-- Zone des modificateurs (Exclusive au mode Cricket) -->
+            <div class="cricket-modifiers" id="cricket-modifiers-zone" style="display: none;">
+                <button class="mod-btn active" id="mod-1" onclick="setCricketMultiplier(1)">Simple</button>
+                <button class="mod-btn" id="mod-2" onclick="setCricketMultiplier(2)">Double x2</button>
+                <button class="mod-btn" id="mod-3" onclick="setCricketMultiplier(3)">Triple x3</button>
+            </div>
+
             <div class="preview-score" id="preview-display">0</div>
             <div class="grid-keyboard" id="keyboard-grid"></div>
         </div>
@@ -182,8 +202,8 @@
     let currentPlayerIndex = 0;
     let currentInput = "";
     let isGameOver = false;
+    let cricketMultiplier = 1; // Stocke le multiplicateur sélectionné (1, 2 ou 3)
 
-    // Cibles successives imposées pour le mode Juste Cible (Halve-it)
     const halveItTargets = [15, 16, "Double", 17, 18, "Triple", 19, 20, "Bulle"];
 
     let setupPlayers = [
@@ -234,9 +254,9 @@
             if (selectedGameMode === 'cricket') {
                 return { name: p.name, isBot: p.isBot, cricketStats: {20:0, 19:0, 18:0, 17:0, 16:0, 15:0, 25:0} };
             } else if (selectedGameMode === 'halveit') {
-                return { name: p.name, isBot: p.isBot, score: 40, currentRoundIdx: 0 }; // Débute à 40 pts
+                return { name: p.name, isBot: p.isBot, score: 40, currentRoundIdx: 0 };
             } else if (selectedGameMode === 'around') {
-                return { name: p.name, isBot: p.isBot, score: 1 }; // Doit toucher la cible 1
+                return { name: p.name, isBot: p.isBot, score: 1 };
             } else {
                 return { name: p.name, isBot: p.isBot, score: parseInt(selectedGameMode) };
             }
@@ -245,6 +265,7 @@
         currentPlayerIndex = 0;
         currentInput = "";
         isGameOver = false;
+        cricketMultiplier = 1;
 
         document.getElementById('menu-screen').style.display = 'none';
         document.getElementById('game-screen').style.display = 'flex';
@@ -264,41 +285,47 @@
         }
     }
 
+    function setCricketMultiplier(mult) {
+        cricketMultiplier = mult;
+        document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`mod-${mult}`).classList.add('active');
+        
+        // Petite aide visuelle sur l'écran
+        let prefix = mult === 3 ? "Triple " : (mult === 2 ? "Double " : "");
+        document.getElementById('preview-display').innerText = prefix + "Sélectionné";
+    }
+
     function buildKeyboard() {
         const grid = document.getElementById('keyboard-grid');
         const preview = document.getElementById('preview-display');
+        const modZone = document.getElementById('cricket-modifiers-zone');
         
         if (selectedGameMode === 'cricket') {
+            modZone.style.display = 'grid'; // Affiche la ligne Simple/Double/Triple
             grid.innerHTML = `
                 <button class="key" onclick="pressCricket(20)">20</button><button class="key" onclick="pressCricket(19)">19</button><button class="key" onclick="pressCricket(18)">18</button>
                 <button class="key" onclick="pressCricket(17)">17</button><button class="key" onclick="pressCricket(16)">16</button><button class="key" onclick="pressCricket(15)">15</button>
                 <button class="key" style="grid-column: span 2" onclick="pressCricket(25)">Bulle 🎯</button>
                 <button class="key clear" onclick="pressCricket(0)">Manqué ⭕</button>
             `;
-            preview.innerText = "Appuie sur tes touches";
-        } else if (selectedGameMode === 'around') {
-            grid.innerHTML = `
-                <button class="key clear" style="grid-column: span 1" onclick="executeAroundTurn(false)">Manqué ⭕</button>
-                <button class="key ok" style="grid-column: span 2" onclick="executeAroundTurn(true)">Touché ! 🎯</button>
-            `;
-            preview.innerText = "Lancer de 3 fléchettes";
-        } else if (selectedGameMode === 'halveit') {
-            grid.innerHTML = `
-                <button class="key" onclick="pressNum(1)">1</button><button class="key" onclick="pressNum(2)">2</button><button class="key" onclick="pressNum(3)">3</button>
-                <button class="key" onclick="pressNum(4)">4</button><button class="key" onclick="pressNum(5)">5</button><button class="key" onclick="pressNum(6)">6</button>
-                <button class="key" onclick="pressNum(7)">7</button><button class="key" onclick="pressNum(8)">8</button><button class="key" onclick="pressNum(9)">9</button>
-                <button class="key clear" onclick="pressClear()">Effacer</button><button class="key" onclick="pressNum(0)">0</button><button class="key ok" onclick="pressHalveIt()">OK</button>
-            `;
-            preview.innerText = "0 pts";
+            preview.innerText = "Sélectionnez votre zone";
         } else {
-            // X01 standard
-            grid.innerHTML = `
-                <button class="key" onclick="pressNum(1)">1</button><button class="key" onclick="pressNum(2)">2</button><button class="key" onclick="pressNum(3)">3</button>
-                <button class="key" onclick="pressNum(4)">4</button><button class="key" onclick="pressNum(5)">5</button><button class="key" onclick="pressNum(6)">6</button>
-                <button class="key" onclick="pressNum(7)">7</button><button class="key" onclick="pressNum(8)">8</button><button class="key" onclick="pressNum(9)">9</button>
-                <button class="key clear" onclick="pressClear()">Effacer</button><button class="key" onclick="pressNum(0)">0</button><button class="key ok" onclick="pressOK()">OK</button>
-            `;
-            preview.innerText = "0";
+            modZone.style.display = 'none';
+            if (selectedGameMode === 'around') {
+                grid.innerHTML = `
+                    <button class="key clear" style="grid-column: span 1" onclick="executeAroundTurn(false)">Manqué ⭕</button>
+                    <button class="key ok" style="grid-column: span 2" onclick="executeAroundTurn(true)">Touché ! 🎯</button>
+                `;
+                preview.innerText = "Lancer de 3 fléchettes";
+            } else {
+                grid.innerHTML = `
+                    <button class="key" onclick="pressNum(1)">1</button><button class="key" onclick="pressNum(2)">2</button><button class="key" onclick="pressNum(3)">3</button>
+                    <button class="key" onclick="pressNum(4)">4</button><button class="key" onclick="pressNum(5)">5</button><button class="key" onclick="pressNum(6)">6</button>
+                    <button class="key" onclick="pressNum(7)">7</button><button class="key" onclick="pressNum(8)">8</button><button class="key" onclick="pressNum(9)">9</button>
+                    <button class="key clear" onclick="pressClear()">Effacer</button><button class="key" onclick="pressNum(0)">0</button><button class="key ok" onclick="pressOK()">OK</button>
+                `;
+                preview.innerText = "0";
+            }
         }
     }
 
@@ -309,7 +336,6 @@
         listContainer.innerHTML = '';
         tableWrapper.innerHTML = '';
 
-        // AFFICHAGE MODE CRICKET (TABLEAU SÉPARÉ)
         if (selectedGameMode === 'cricket') {
             listContainer.style.display = 'none';
             
@@ -339,7 +365,6 @@
             tableHTML += `</tbody></table></div>`;
             tableWrapper.innerHTML = tableHTML;
 
-        // AFFICHAGE STANDARD POUR LES AUTRES MODES
         } else {
             listContainer.style.display = 'flex';
             players.forEach((player, index) => {
@@ -367,7 +392,6 @@
             });
         }
 
-        // Clavier VS Écran de réflexion du Bot
         if (players[currentPlayerIndex].isBot && !isGameOver) {
             document.getElementById('keyboard-wrapper').style.display = 'none';
             document.getElementById('bot-status').style.display = 'block';
@@ -378,7 +402,6 @@
         }
     }
 
-    // SAISIE ET EFFACEMENT CLAVIER CLASSIQUE
     function pressNum(num) {
         if (currentInput.length < 3) {
             currentInput += num;
@@ -387,7 +410,7 @@
     }
     function pressClear() { currentInput = ""; document.getElementById('preview-display').innerText = "0"; }
 
-    // LOGIQUE JEU : X01 (301/501)
+    // X01
     function pressOK() {
         const points = parseInt(currentInput) || 0;
         if (points > 180) { alert("Max 180 !"); return; }
@@ -407,7 +430,7 @@
         pressClear(); nextPlayer();
     }
 
-    // LOGIQUE JEU : CRICKET
+    // CRICKET (PRISE EN COMPTE MULTIPLICATEUR)
     function pressCricket(target) {
         if(isGameOver) return;
         let player = players[currentPlayerIndex];
@@ -415,13 +438,23 @@
 
         if(target === 0) {
             history.insertAdjacentHTML('afterbegin', `<div>⭕ ${player.name} a manqué son tour</div>`);
-            nextPlayer(); return;
+            setCricketMultiplier(1); nextPlayer(); return;
         }
 
+        // Cas spécial de la bulle : Ne peut être qu'un simple (25) ou double (50), pas de triple au Cricket traditionnel
+        if (target === 25 && cricketMultiplier === 3) {
+            cricketMultiplier = 2; // Rétrogradé automatiquement en double bulle
+        }
+
+        let label = cricketMultiplier === 3 ? "Triple" : (cricketMultiplier === 2 ? "Double" : "Simple");
+        let addedHits = cricketMultiplier;
+
         if(player.cricketStats[target] < 3) {
-            player.cricketStats[target]++;
-            history.insertAdjacentHTML('afterbegin', `<div>🎯 ${player.name} coche le ${target === 25 ? 'Bulle' : target}</div>`);
+            // Ajout des points de touches (Max 3)
+            player.cricketStats[target] = Math.min(3, player.cricketStats[target] + addedHits);
+            history.insertAdjacentHTML('afterbegin', `<div>🎯 ${player.name} valide un <b>${label} ${target === 25 ? 'Bulle' : target}</b> !</div>`);
             
+            // Vérifier victoire
             let win = true;
             for(let t in player.cricketStats) { if(player.cricketStats[t] < 3) win = false; }
             if(win) {
@@ -431,10 +464,13 @@
         } else {
             history.insertAdjacentHTML('afterbegin', `<div>🔒 ${target} déjà fermé pour ${player.name}</div>`);
         }
+
+        // Réinitialiser le modificateur sur Simple pour le joueur d'après
+        setCricketMultiplier(1);
         updateGameUI(); nextPlayer();
     }
 
-    // LOGIQUE JEU : TOUR DU MONDE (AROUND THE CLOCK)
+    // TOUR DU MONDE
     function executeAroundTurn(hit) {
         let player = players[currentPlayerIndex];
         const history = document.getElementById('history-container');
@@ -452,7 +488,7 @@
         nextPlayer();
     }
 
-    // LOGIQUE JEU : JUSTE CIBLE (HALVE-IT)
+    // JUSTE CIBLE
     function pressHalveIt() {
         const points = parseInt(currentInput) || 0;
         let player = players[currentPlayerIndex];
@@ -469,9 +505,7 @@
 
         player.currentRoundIdx++;
         
-        // Vérification de fin de jeu pour tout le monde après la Bulle
         if (player.currentRoundIdx >= halveItTargets.length) {
-            // Si c'est le dernier joueur à avoir tiré sa dernière fléchette, on compte le gagnant
             if(currentPlayerIndex === players.length - 1) {
                 isGameOver = true;
                 let winner = players.reduce((max, p) => p.score > max.score ? p : max, players[0]);
@@ -480,7 +514,6 @@
                 return;
             }
         }
-
         pressClear(); nextPlayer();
     }
 
@@ -491,7 +524,7 @@
         }
     }
 
-    // INTELLIGENCE DES BOTS (INTEGRATION MULTI-JEUX)
+    // INTELLIGENCE DES BOTS (AMÉLIORÉE AVEC DOUBLE/TRIPLE POUR LE CRICKET)
     function runBotTurn() {
         setTimeout(() => {
             if(isGameOver) return;
@@ -501,32 +534,42 @@
                 let targets = [20, 19, 18, 17, 16, 15, 25];
                 let shot = 0;
                 for(let t of targets) {
-                    if(bot.cricketStats[t] < 3) { shot = Math.random() > 0.45 ? t : 0; break; }
+                    if(bot.cricketStats[t] < 3) { 
+                        // 55% de chance de toucher
+                        if (Math.random() > 0.45) {
+                            shot = t;
+                            // Détermination aléatoire si le bot fait un Simple, Double ou Triple (Sauf Bulle)
+                            let randMult = Math.random();
+                            if (shot !== 25 && randMult > 0.85) {
+                                cricketMultiplier = 3; // Triple surprise !
+                            } else if (randMult > 0.65) {
+                                cricketMultiplier = 2; // Double !
+                            } else {
+                                cricketMultiplier = 1;
+                            }
+                        } else {
+                            shot = 0; // Manqué
+                        }
+                        break; 
+                    }
                 }
                 pressCricket(shot);
             } else if (selectedGameMode === 'around') {
-                let hit = Math.random() > 0.5; // 50% de chance de passer au numéro suivant
+                let hit = Math.random() > 0.5;
                 executeAroundTurn(hit);
             } else if (selectedGameMode === 'halveit') {
-                let hitSuccess = Math.random() > 0.35; // 65% de chance de réussir sa cible imposée
+                let hitSuccess = Math.random() > 0.35;
                 let scoreSimulated = hitSuccess ? (Math.floor(Math.random() * 3) + 1) * parseInt(halveItTargets[bot.currentRoundIdx]) || 20 : 0;
                 currentInput = scoreSimulated.toString();
                 pressHalveIt();
             } else {
-                // X01
                 let botPoints = Math.floor(Math.random() * 35) + 15;
                 if (botPoints > bot.score) botPoints = bot.score;
-                executeX01Turn(botPoints); // Raccourci direct
+                currentInput = botPoints.toString(); pressOK();
             }
         }, 1400);
     }
 
-    // Alias pour la logique IA du X01 sans passer par les boutons physiques
-    function executeX01Turn(points) {
-        currentInput = points.toString(); pressOK();
-    }
-
-    // Init au démarrage
     renderSetup();
 </script>
 </body>
