@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DartScore Mobile</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #121824 0%, #080b11 100%);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --active-bg: rgba(46, 204, 113, 0.15);
+            --accent-green: #2ecc71;
+            --text-main: #ffffff;
+            --text-muted: #8a99ad;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 414px; /* Taille standard iPhone */
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .reset-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .players-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .player-card {
+            background: var(--card-bg);
+            border: 2px solid transparent;
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .player-card.active {
+            background: var(--active-bg);
+            border-color: var(--accent-green);
+        }
+
+        .player-name {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .player-type {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .player-score {
+            font-size: 24px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .player-card.active .player-score, .player-card.active .player-name {
+            color: var(--accent-green);
+        }
+
+        .history-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            height: 80px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .history-entry {
+            margin-bottom: 4px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .keyboard-section {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 20px;
+            padding: 15px;
+            margin-top: auto;
+        }
+
+        .preview-score {
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .preview-score span {
+            font-size: 16px;
+            color: var(--text-muted);
+            font-weight: normal;
+        }
+
+        .grid-keyboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .key {
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: white;
+            padding: 18px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .key:active {
+            opacity: 0.7;
+        }
+
+        .key.clear {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .key.ok {
+            background: var(--accent-green);
+            color: #121824;
+        }
+
+        .bot-thinking {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        @keyframes blink {
+            0% { opacity: .2; }
+            20% { opacity: 1; }
+            100% { opacity: .2; }
+        }
+
+        .bot-thinking span {
+            animation-name: blink;
+            animation-duration: 1.4s;
+            animation-iteration-count: infinite;
+            animation-fill-mode: both;
+        }
+        .bot-thinking span:nth-child(2) { animation-delay: .2s; }
+        .bot-thinking span:nth-child(3) { animation-delay: .4s; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h1>🎯 DartScore</h1>
+        <button class="reset-btn" onclick="initGame()">🔄</button>
+    </header>
+
+    <div class="players-list" id="players-container"></div>
+
+    <div class="history-box" id="history-container"></div>
+
+    <div class="keyboard-section" id="keyboard-wrapper">
+        <div class="preview-score" id="preview-display">0 <span>pts</span></div>
+        <div class="grid-keyboard">
+            <button class="key" onclick="pressNum(1)">1</button>
+            <button class="key" onclick="pressNum(2)">2</button>
+            <button class="key" onclick="pressNum(3)">3</button>
+            <button class="key" onclick="pressNum(4)">4</button>
+            <button class="key" onclick="pressNum(5)">5</button>
+            <button class="key" onclick="pressNum(6)">6</button>
+            <button class="key" onclick="pressNum(7)">7</button>
+            <button class="key" onclick="pressNum(8)">8</button>
+            <button class="key" onclick="pressNum(9)">9</button>
+            <button class="key clear" onclick="pressClear()">Effacer</button>
+            <button class="key" onclick="pressNum(0)">0</button>
+            <button class="key ok" onclick="pressOK()">OK</button>
+        </div>
+    </div>
+
+    <div class="bot-thinking" id="bot-status">
+        Darty Bot réfléchit<span>.</span><span>.</span><span>.</span>
+    </div>
+</div>
+
+<script>
+    let players = [];
+    let currentPlayerIndex = 0;
+    let currentInput = "";
+    let isGameOver = false;
+
+    function initGame() {
+        players = [
+            { name: "Moi", score: 301, isBot: false },
+            { name: "Joueur 2", score: 301, isBot: false },
+            { name: "Darty Bot (IA)", score: 301, isBot: true }
+        ];
+        currentPlayerIndex = 0;
+        currentInput = "";
+        isGameOver = false;
+        
+        document.getElementById('history-container').innerHTML = '<div class="history-entry">🎯 La partie de 301 commence !</div>';
+        updateUI();
+    }
+
+    function updateUI() {
+        // Rendu des joueurs
+        const container = document.getElementById('players-container');
+        container.innerHTML = '';
+        
+        players.forEach((player, index) => {
+            const isActive = index === currentPlayerIndex ? 'active' : '';
+            container.innerHTML += `
+                <div class="player-card ${isActive}">
+                    <div>
+                        <div class="player-name">${player.name}</div>
+                        <div class="player-type">${player.isBot ? '🤖 Intelligence Artificielle' : '👤 Joueur'}</div>
+                    </div>
+                    <div class="player-score">${player.score}</div>
+                </div>
+            `;
+        });
+
+        document.getElementById('preview-display').innerHTML = `${currentInput || '0'} <span>pts</span>`;
+
+        // Gestion de l'affichage Clavier vs Mode Bot
+        if (players[currentPlayerIndex].isBot && !isGameOver) {
+            document.getElementById('keyboard-wrapper').style.display = 'none';
+            document.getElementById('bot-status').style.display = 'block';
+        } else {
+            document.getElementById('keyboard-wrapper').style.display = 'block';
+            document.getElementById('bot-status').style.display = 'none';
+        }
+    }
+
+    function pressNum(num) {
+        if (currentInput.length < 3) {
+            currentInput += num;
+            updateUI();
+        }
+    }
+
+    function pressClear() {
+        currentInput = "";
+        updateUI();
+    }
+
+    function pressOK() {
+        const points = parseInt(currentInput) || 0;
+        if (points > 180) {
+            alert("Le score maximum avec 3 fléchettes est de 180 !");
+            return;
+        }
+        executeTurn(points);
+    }
+
+    function executeTurn(points) {
+        if (isGameOver) return;
+
+        let player = players[currentPlayerIndex];
+        let newScore = player.score - points;
+        const history = document.getElementById('history-container');
+
+        if (newScore === 0) {
+            player.score = 0;
+            history.insertAdjacentHTML('afterbegin', `<div class="history-entry">🎉 <b>${player.name}</b> l'emporte !</div>`);
+            isGameOver = true;
+            updateUI();
+            setTimeout(() => alert(`Victoire de ${player.name} ! 🎉`), 100);
+            return;
+        } else if (newScore < 0) {
+            history.insertAdjacentHTML('afterbegin', `<div class="history-entry">💥 ${player.name} fait un BUST (${points} pts)</div>`);
+        } else {
+            player.score = newScore;
+            history.insertAdjacentHTML('afterbegin', `<div class="history-entry">🎯 ${player.name} marque ${points} pts (Reste : ${newScore})</div>`);
+        }
+
+        currentInput = "";
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.count;
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+        
+        updateUI();
+
+        if (players[currentPlayerIndex].isBot && !isGameOver) {
+            runBotTurn();
+        }
+    }
+
+    function runBotTurn() {
+        setTimeout(() => {
+            const bot = players[currentPlayerIndex];
+            // Logique de tir du bot
+            let botPoints = Math.floor(Math.random() * 30) + 15; // Score entre 15 et 45
+            
+            // Si le bot peut gagner, on lui donne une chance de réussir son coup
+            if (botPoints > bot.score) {
+                botPoints = Math.random() > 0.5 ? bot.score : Math.floor(Math.random() * bot.score);
+            }
+
+            executeTurn(botPoints);
+        }, 1500); // 1.5 seconde de réflexion
+    }
+
+    // Lancement automatique
+    initGame();
+</script>
+</body>
+</html>
